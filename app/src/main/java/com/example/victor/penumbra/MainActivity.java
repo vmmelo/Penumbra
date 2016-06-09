@@ -1,86 +1,75 @@
 package com.example.victor.penumbra;
 
-import android.app.Activity;
-import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.os.Bundle;
-import android.widget.TextView;
+        import java.util.ArrayList;
+        import java.util.List;
 
-public class MainActivity extends Activity implements SensorEventListener {
+        import android.app.Activity;
+        import android.content.Intent;
+        import android.os.Bundle;
+        import android.view.View;
+        import android.widget.AdapterView;
+        import android.widget.AdapterView.OnItemClickListener;
+        import android.widget.ArrayAdapter;
+        import android.widget.ListView;
 
-    private TextView textViewX;
-    private TextView textViewY;
-    private TextView textViewZ;
-    private TextView textViewDetail;
+public class MainActivity extends Activity {
 
-    private SensorManager mSensorManager;
-    private Sensor mAccelerometer;
+    private ListView lv;
+
+    private static final String OPCAO1 = "Novo Jogo";
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textViewX = (TextView) findViewById(R.id.text_view_x);
-        textViewY = (TextView) findViewById(R.id.text_view_y);
-        textViewZ = (TextView) findViewById(R.id.text_view_z);
-        textViewDetail = (TextView) findViewById(R.id.text_view_detail);
+		/*
+		 * Simples lista que corresponde
+		 * aos dados que queremos exibir
+		 * em forma de lista
+		 */
+        List<String> itens = new ArrayList<String>();
 
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        itens.add(OPCAO1);
 
+		/*
+		 * ArrayAdapter determina como os dados
+		 * serao exibidos no componente de UI.
+		 */
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, itens);
+
+		/*
+		 * listView1 que se encontra em activity_main.xml
+		 * eh o componente de UI que vai exibir os dados
+		 * em forma de lista
+		 */
+        lv = (ListView) findViewById(R.id.listView1);
+
+		/*
+		 * Associa ArrayAdapter e ListView
+		 */
+        lv.setAdapter(arrayAdapter);
+
+        //continua
+        //continuacao
+        lv.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> av, View v, int position,
+                                    long arg3) {
+
+                String opcao = (String) av.getItemAtPosition(position);
+                if (OPCAO1.equals(opcao)) {
+                    startLinearLayoutDemoActivity();
+
+                }
+            }
+        });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+    public void startLinearLayoutDemoActivity() {
+        startActivity(new Intent(this, Game.class));
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mSensorManager.unregisterListener(this);
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        Float x = event.values[0];
-        Float y = event.values[1];
-        Float z = event.values[2];
-
-         /*
-        Os valores ocilam de -10 a 10.
-        Quanto maior o valor de X mais ele ta caindo para a esquerda - Positivo Esqueda
-        Quanto menor o valor de X mais ele ta caindo para a direita  - Negativo Direita
-        Se o valor de  X for 0 então o celular ta em pé - Nem Direita Nem Esquerda
-        Se o valor de Y for 0 então o cel ta "deitado"
-         Se o valor de Y for negativo então ta de cabeça pra baixo, então quanto menor y mais ele ta inclinando pra ir pra baixo
-        Se o valor de Z for 0 então o dispositivo esta reto na horizontal.
-        Quanto maioro o valor de Z Mais ele esta inclinado para frente
-        Quanto menor o valor de Z Mais ele esta inclinado para traz.
-        */
-        textViewX.setText("Posição X: " + x.intValue() + " Float: " + x);
-        textViewY.setText("Posição Y: " + y.intValue() + " Float: " + y);
-        textViewZ.setText("Posição Z: " + z.intValue() + " Float: " + z);
-
-        if(y < 0) { // O dispositivo esta de cabeça pra baixo
-            if(x > 0)
-                textViewDetail.setText("Virando para ESQUERDA ficando INVERTIDO");
-            if(x < 0)
-                textViewDetail.setText("Virando para DIREITA ficando INVERTIDO");
-        } else {
-            if(x > 0)
-                textViewDetail.setText("Virando para ESQUERDA ");
-            if(x < 0)
-                textViewDetail.setText("Virando para DIREITA ");
-        }
-    }
 }
