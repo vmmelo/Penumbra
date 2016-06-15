@@ -6,8 +6,14 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.TextView;
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 
 public class Game extends Activity implements SensorEventListener {
 
@@ -18,6 +24,11 @@ public class Game extends Activity implements SensorEventListener {
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -30,8 +41,12 @@ public class Game extends Activity implements SensorEventListener {
         textViewDetail = (TextView) findViewById(R.id.text_view_detail);
 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        //mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
@@ -56,6 +71,14 @@ public class Game extends Activity implements SensorEventListener {
         Float y = event.values[1];
         Float z = event.values[2];
 
+        float cnst = (float) 1;
+//        float cnst = (float) (180.0 / 3.1428);
+
+        float fx = x.floatValue() * cnst;
+        float fy = y.floatValue() * cnst;
+        float fz = z.floatValue() * cnst;
+
+
          /*
         Os valores ocilam de -10 a 10.
         Quanto maior o valor de X mais ele ta caindo para a esquerda - Positivo Esqueda
@@ -67,20 +90,64 @@ public class Game extends Activity implements SensorEventListener {
         Quanto maioro o valor de Z Mais ele esta inclinado para frente
         Quanto menor o valor de Z Mais ele esta inclinado para traz.
         */
-        textViewX.setText("Posição X: " + x.intValue() + " Float: " + x);
-        textViewY.setText("Posição Y: " + y.intValue() + " Float: " + y);
-        textViewZ.setText("Posição Z: " + z.intValue() + " Float: " + z);
+        //textViewX.setText("Posição X: " + x.intValue() + " Float: " + x);
+        //textViewY.setText("Posição Y: " + y.intValue() + " Float: " + y);
+        //textViewZ.setText("Posição Z: " + z.intValue() + " Float: " + z);
 
-        if(y < 0) { // O dispositivo esta de cabeça pra baixo
-            if(x > 0)
-                textViewDetail.setText("Virando para ESQUERDA ficando INVERTIDO");
-            if(x < 0)
-                textViewDetail.setText("Virando para DIREITA ficando INVERTIDO");
-        } else {
-            if(x > 0)
-                textViewDetail.setText("Virando para ESQUERDA ");
-            if(x < 0)
-                textViewDetail.setText("Virando para DIREITA ");
-        }
+        textViewX.setText("Posição X: " + fx);
+        textViewY.setText("Posição Y: " + fy);
+        textViewZ.setText("Posição Z: " + fz);
+
+//        if (y < 0) { // O dispositivo esta de cabeça pra baixo
+//            if (x > 0)
+//                textViewDetail.setText("Virando para ESQUERDA ficando INVERTIDO");
+//            if (x < 0)
+//                textViewDetail.setText("Virando para DIREITA ficando INVERTIDO");
+//        } else {
+//            if (x > 0)
+//                textViewDetail.setText("Virando para ESQUERDA ");
+//            if (x < 0)
+//                textViewDetail.setText("Virando para DIREITA ");
+//        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Game Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.example.victor.penumbra/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Game Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.example.victor.penumbra/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
     }
 }
