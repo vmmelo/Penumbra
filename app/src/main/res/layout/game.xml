@@ -14,20 +14,6 @@
         android:id="@+id/text_view_x"
         />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="text_view_y"
-        android:id="@+id/text_view_y"
-        />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="text_view_z"
-        android:id="@+id/text_view_z"
-        />
-
 
     <TextView
         android:layout_width="wrap_content"
@@ -35,5 +21,18 @@
         android:text="text_view_detail"
         android:id="@+id/text_view_detail"
         />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bluetooth"
+        android:id="@+id/bluetooth_text_view"
+        android:layout_gravity="center_horizontal" />
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/listView1"
+        android:layout_gravity="center_horizontal" />
 
 </LinearLayout>

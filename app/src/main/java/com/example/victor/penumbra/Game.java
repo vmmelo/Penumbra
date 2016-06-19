@@ -1,53 +1,112 @@
 package com.example.victor.penumbra;
 
-import android.app.Activity;
+import android.app.*;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.Uri;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.view.*;
+import java.util.ArrayList;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.api.GoogleApiClient;
-
+import java.util.Set;
 
 public class Game extends Activity implements SensorEventListener {
 
     private TextView textViewX;
-    private TextView textViewY;
-    private TextView textViewZ;
+    private TextView bluetoothTextView;
     private TextView textViewDetail;
+
+    private ListView lv;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    private GoogleApiClient client;
+
+    public static int ENABLE_BLUETOOTH = 1;
+    public static int SELECT_PAIRED_DEVICE = 2;
+    public static int SELECT_DISCOVERED_DEVICE = 3;
+
+    ArrayAdapter<String> arrayAdapter;
+
+    BluetoothAdapter mBluetoothAdapter;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.game);
 
+
         textViewX = (TextView) findViewById(R.id.text_view_x);
-        textViewY = (TextView) findViewById(R.id.text_view_y);
-        textViewZ = (TextView) findViewById(R.id.text_view_z);
         textViewDetail = (TextView) findViewById(R.id.text_view_detail);
+        bluetoothTextView = (TextView) findViewById(R.id.bluetooth_text_view);
+        lv = (ListView) findViewById(R.id.listView1);
+
+        arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+
+        lv.setAdapter(arrayAdapter);
 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         //mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);//deprecatede, mas foda-se
 
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBluetoothAdapter == null) {
+            bluetoothTextView.setText("Que pena! Hardware Bluetooth não está funcionando :(");
+        } else {
+            bluetoothTextView.setText("Ótimo! Hardware Bluetooth está funcionando :)");
+        }
+
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, ENABLE_BLUETOOTH);
+        }
+
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        // If there are paired devices
+        if (pairedDevices.size() > 0) {
+            // Loop through paired devices
+            for (BluetoothDevice device : pairedDevices) {
+                //fazer alguma coisa com os que já estão pareados
+                arrayAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
+        }
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
+
+        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);//0 -> infinito
+        startActivity(discoverableIntent);
     }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        unregisterReceiver(mReceiver);
+    }
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            // When discovery finds a device
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Get the BluetoothDevice object from the Intent
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                // Add the name and address to an array adapter to show in a ListView
+                arrayAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
+        }
+    };
 
     @Override
     protected void onResume() {
@@ -67,87 +126,17 @@ public class Game extends Activity implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        Float x = event.values[0];
-        Float y = event.values[1];
-        Float z = event.values[2];
 
-        float cnst = (float) 1;
-//        float cnst = (float) (180.0 / 3.1428);
+        float pitch = event.values[2];
 
-        float fx = x.floatValue() * cnst;
-        float fy = y.floatValue() * cnst;
-        float fz = z.floatValue() * cnst;
+        textViewX.setText("Posição X: " + pitch);
 
-
-         /*
-        Os valores ocilam de -10 a 10.
-        Quanto maior o valor de X mais ele ta caindo para a esquerda - Positivo Esqueda
-        Quanto menor o valor de X mais ele ta caindo para a direita  - Negativo Direita
-        Se o valor de  X for 0 então o celular ta em pé - Nem Direita Nem Esquerda
-        Se o valor de Y for 0 então o cel ta "deitado"
-         Se o valor de Y for negativo então ta de cabeça pra baixo, então quanto menor y mais ele ta inclinando pra ir pra baixo
-        Se o valor de Z for 0 então o dispositivo esta reto na horizontal.
-        Quanto maioro o valor de Z Mais ele esta inclinado para frente
-        Quanto menor o valor de Z Mais ele esta inclinado para traz.
-        */
-        //textViewX.setText("Posição X: " + x.intValue() + " Float: " + x);
-        //textViewY.setText("Posição Y: " + y.intValue() + " Float: " + y);
-        //textViewZ.setText("Posição Z: " + z.intValue() + " Float: " + z);
-
-        textViewX.setText("Posição X: " + fx);
-        textViewY.setText("Posição Y: " + fy);
-        textViewZ.setText("Posição Z: " + fz);
-
-//        if (y < 0) { // O dispositivo esta de cabeça pra baixo
-//            if (x > 0)
-//                textViewDetail.setText("Virando para ESQUERDA ficando INVERTIDO");
-//            if (x < 0)
-//                textViewDetail.setText("Virando para DIREITA ficando INVERTIDO");
-//        } else {
-//            if (x > 0)
-//                textViewDetail.setText("Virando para ESQUERDA ");
-//            if (x < 0)
-//                textViewDetail.setText("Virando para DIREITA ");
-//        }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Game Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://com.example.victor.penumbra/http/host/path")
-        );
-        AppIndex.AppIndexApi.start(client, viewAction);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        Action viewAction = Action.newAction(
-                Action.TYPE_VIEW, // TODO: choose an action type.
-                "Game Page", // TODO: Define a title for the content shown.
-                // TODO: If you have web page content that matches this app activity's content,
-                // make sure this auto-generated web page URL is correct.
-                // Otherwise, set the URL to null.
-                Uri.parse("http://host/path"),
-                // TODO: Make sure this auto-generated app deep link URI is correct.
-                Uri.parse("android-app://com.example.victor.penumbra/http/host/path")
-        );
-        AppIndex.AppIndexApi.end(client, viewAction);
-        client.disconnect();
+        if (pitch <= 45 && pitch >= -45) {
+            textViewDetail.setText("mostly vertical");
+        } else if (pitch < -45) {
+            textViewDetail.setText("mostly right side");
+        } else if (pitch > 45) {
+            textViewDetail.setText("mostly left side");
+        }
     }
 }
