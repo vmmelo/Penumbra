@@ -22,6 +22,8 @@ import java.util.Set;
 
 public class Game extends Activity implements SensorEventListener {
 
+    // MAC do volante : 20:13:01:24:10:92
+
     private TextView textViewX;
     private TextView bluetoothTextView;
     private TextView textViewDetail;
@@ -60,6 +62,7 @@ public class Game extends Activity implements SensorEventListener {
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);//deprecatede, mas foda-se
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
         if (mBluetoothAdapter == null) {
             bluetoothTextView.setText("Que pena! Hardware Bluetooth não está funcionando :(");
         } else {
@@ -71,6 +74,7 @@ public class Game extends Activity implements SensorEventListener {
             startActivityForResult(enableBtIntent, ENABLE_BLUETOOTH);
         }
 
+        mBluetoothAdapter.startDiscovery();
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         // If there are paired devices
         if (pairedDevices.size() > 0) {
