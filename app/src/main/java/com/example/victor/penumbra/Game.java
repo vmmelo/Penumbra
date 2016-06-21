@@ -16,15 +16,19 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.view.*;
-import java.util.ArrayList;
+import android.os.Handler;
+import android.os.Message;
 
 import java.util.Set;
 
 public class Game extends Activity implements SensorEventListener {
 
-    private TextView textViewX;
-    private TextView bluetoothTextView;
-    private TextView textViewDetail;
+    // MAC do volante : 20:13:01:24:10:92
+
+    static TextView textViewX;
+    static TextView bluetoothTextView;
+    static TextView textViewDetail;
+    static TextView bluetoothData;
 
     private ListView lv;
 
@@ -39,6 +43,7 @@ public class Game extends Activity implements SensorEventListener {
 
     BluetoothAdapter mBluetoothAdapter;
 
+    ConnectionThread connect;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,6 +54,8 @@ public class Game extends Activity implements SensorEventListener {
         textViewX = (TextView) findViewById(R.id.text_view_x);
         textViewDetail = (TextView) findViewById(R.id.text_view_detail);
         bluetoothTextView = (TextView) findViewById(R.id.bluetooth_text_view);
+        bluetoothData = (TextView) findViewById(R.id.bluetooth_data);
+
         lv = (ListView) findViewById(R.id.listView1);
 
         arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
@@ -60,6 +67,7 @@ public class Game extends Activity implements SensorEventListener {
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);//deprecatede, mas foda-se
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
         if (mBluetoothAdapter == null) {
             bluetoothTextView.setText("Que pena! Hardware Bluetooth não está funcionando :(");
         } else {
@@ -71,15 +79,17 @@ public class Game extends Activity implements SensorEventListener {
             startActivityForResult(enableBtIntent, ENABLE_BLUETOOTH);
         }
 
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-        // If there are paired devices
-        if (pairedDevices.size() > 0) {
-            // Loop through paired devices
-            for (BluetoothDevice device : pairedDevices) {
-                //fazer alguma coisa com os que já estão pareados
-                arrayAdapter.add(device.getName() + "\n" + device.getAddress());
-            }
-        }
+        mBluetoothAdapter.startDiscovery();
+
+//        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+//        // If there are paired devices
+//        if (pairedDevices.size() > 0) {
+//            // Loop through paired devices
+//            for (BluetoothDevice device : pairedDevices) {
+//                //fazer alguma coisa com os que já estão pareados
+//                arrayAdapter.add(device.getName() + "\n" + device.getAddress());
+//            }
+//        }
 
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
@@ -104,6 +114,13 @@ public class Game extends Activity implements SensorEventListener {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // Add the name and address to an array adapter to show in a ListView
                 arrayAdapter.add(device.getName() + "\n" + device.getAddress());
+
+                //quando achar o volante conectar a ele->procurar pelo endereço mac do volante
+                if(device.getAddress().equals("20:13:01:24:10:92")) {
+                    connect = new ConnectionThread("20:13:01:24:10:92");
+                    connect.start();
+                    bluetoothData.setText("mandar conexão e esperar data");
+                }
             }
         }
     };
@@ -139,4 +156,21 @@ public class Game extends Activity implements SensorEventListener {
             textViewDetail.setText("mostly left side");
         }
     }
+
+    public static Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+
+            Bundle bundle = msg.getData();
+            byte[] data = bundle.getByteArray("data");
+            String dataString= new String(data);
+
+            if(dataString.equals("---N"))
+                bluetoothTextView.setText("Ocorreu um erro durante a conexão D:");
+            else if(dataString.equals("---S"))
+                bluetoothTextView.setText("Conectado :D");
+
+        }
+    };
 }
+
