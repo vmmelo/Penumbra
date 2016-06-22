@@ -159,6 +159,7 @@ public class Game extends Activity implements SensorEventListener {
 
         if (pitch <= 45 && pitch >= -45) {
             textViewDetail.setText("mostly vertical");
+            connect.pararAlmbosLerBotoes();
 
         } else if (pitch < -30) {
             textViewDetail.setText("mostly right side");
@@ -173,6 +174,20 @@ public class Game extends Activity implements SensorEventListener {
                 connect.vibrarEsquerdaLerBotoes();
                 //connect.vibrarEsquerda();
                 bluetoothData.setText("" + connect.bytes);
+            }
+        }
+
+        if(connect.running){
+            if(connect.leftPressed){
+                bluetoothData.setText("botao esquerda apertado");
+            }
+
+            else if(connect.rightPressed){
+                bluetoothData.setText("botao direita apertado");
+            }
+
+            else{
+                bluetoothData.setText("nenhum");
             }
         }
     }

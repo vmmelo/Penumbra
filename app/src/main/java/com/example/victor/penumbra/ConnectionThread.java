@@ -29,6 +29,9 @@ public class ConnectionThread extends Thread{
     boolean running = false;
     byte [] data;
 
+    boolean leftPressed = false;
+    boolean rightPressed = false;
+
     int bytes;
 
     InputStream input = null;
@@ -160,7 +163,7 @@ public class ConnectionThread extends Thread{
                     O inteiro bytes representará o número de bytes lidos na
                 última mensagem recebida.
                  */
-                byte[] buffer = new byte[1024];
+                byte[] buffer = new byte[1];
 
                 /*  Permanece em estado de espera até que uma mensagem seja
                 recebida.
@@ -194,6 +197,22 @@ public class ConnectionThread extends Thread{
     antes de ser enviado.
      */
     private void toMainActivity(byte[] data) {
+
+        if(bytes>0) {
+            if (data[0] == 0b10) {
+                leftPressed = true;
+                rightPressed = false;
+            }
+
+            else if (data[0] == 0b01) {
+                rightPressed = true;
+                leftPressed = false;
+            }
+            else{
+                rightPressed = false;
+                leftPressed = false;
+            }
+        }
 
         Message message = new Message();
         Bundle bundle = new Bundle();
