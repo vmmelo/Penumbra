@@ -6,6 +6,12 @@ import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
 import android.os.Message;
+import java.util.Arrays;
+
+import java.lang.String;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -21,6 +27,12 @@ public class ConnectionThread extends Thread{
     String myUUID = "00001101-0000-1000-8000-00805F9B34FB";
     boolean server;
     boolean running = false;
+    byte [] data;
+
+    int bytes;
+
+    InputStream input = null;
+    OutputStream output = null;
 
     /*  Este construtor prepara o dispositivo para atuar como servidor.
      */
@@ -128,6 +140,53 @@ public class ConnectionThread extends Thread{
             ...
         */
 
+        if(btSocket != null) {
+
+            /*  Envia um código para a Activity principal informando que a
+            a conexão ocorreu com sucesso.
+             */
+            toMainActivity("---S".getBytes());
+
+            try {
+
+                /*  Obtem referências para os fluxos de entrada e saída do
+                socket Bluetooth.
+                 */
+                input = btSocket.getInputStream();
+                output = btSocket.getOutputStream();
+
+                /*  Cria um byte array para armazenar temporariamente uma
+                mensagem recebida.
+                    O inteiro bytes representará o número de bytes lidos na
+                última mensagem recebida.
+                 */
+                byte[] buffer = new byte[1024];
+
+                /*  Permanece em estado de espera até que uma mensagem seja
+                recebida.
+                    Armazena a mensagem recebida no buffer.
+                    Envia a mensagem recebida para a Activity principal, do
+                primeiro ao último byte lido.
+                    Esta thread permanecerá em estado de escuta até que
+                a variável running assuma o valor false.
+                 */
+                while(running) {
+
+                    bytes = input.read(buffer);
+                    toMainActivity(Arrays.copyOfRange(buffer, 0, bytes));
+                }
+
+            } catch (IOException e) {
+
+                /*  Caso ocorra alguma exceção, exibe o stack trace para debug.
+                    Envia um código para a Activity principal, informando que
+                a conexão falhou.
+                 */
+                e.printStackTrace();
+                toMainActivity("---N".getBytes());
+            }
+        }
+
     }
 
     /*  Utiliza um handler para enviar um byte array à Activity principal.
@@ -157,5 +216,81 @@ public class ConnectionThread extends Thread{
             e.printStackTrace();
         }
         running = false;
+    }
+
+    public void pararAlmbos(){
+        data = new byte[1];
+        data[0] = 0b000;
+        //data[0] = 0;
+        write(data);
+    }
+
+    public void vibrarEsquerda(){
+        data = new byte[1];
+        data[0] = 0b010;
+        //data[0] = 2;
+        write(data);
+    }
+
+    public void vibrarDireita(){
+        data = new byte[1];
+        data[0] = 0b001;
+        //data[0] = 1;
+        write(data);
+    }
+
+    public void vibrarAmbos(){
+        data = new byte[1];
+        data[0] = 0b011;
+        //data[0] = 3;
+        write(data);
+    }
+
+    public void vibrarEsquerdaLerBotoes(){
+        data = new byte[1];
+        data[0] = 0b110;
+        //data[0] = 6;
+        write(data);
+    }
+
+    public void vibrarDireitaLerBotoes(){
+        data = new byte[1];
+        data[0] = 0b101;
+        //data[0] = 5;
+        write(data);
+    }
+
+    public void vibrarAmbosLerBotoes(){
+        data = new byte[1];
+        data[0] = 0b111;
+        //data[0] = 7;
+        write(data);
+    }
+
+    public void pararAlmbosLerBotoes(){
+        data = new byte[1];
+        data[0] = 0b100;
+        //data[0] = 4;
+        write(data);
+    }
+
+    public void write(byte[] data) {
+
+        if(output != null) {
+            try {
+
+                /*  Transmite a mensagem.
+                 */
+                output.write(data);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+
+            /*  Envia à Activity principal um código de erro durante a conexão.
+             */
+            toMainActivity("---N".getBytes());
+        }
     }
 }

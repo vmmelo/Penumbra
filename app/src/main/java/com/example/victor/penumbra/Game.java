@@ -3,6 +3,7 @@ package com.example.victor.penumbra;
 import android.app.*;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -15,11 +16,13 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.view.*;
 import android.os.Handler;
 import android.os.Message;
 
-import java.util.Set;
+import java.io.Console;
+import java.lang.String;
+
+
 
 public class Game extends Activity implements SensorEventListener {
 
@@ -30,14 +33,14 @@ public class Game extends Activity implements SensorEventListener {
     static TextView textViewDetail;
     static TextView bluetoothData;
 
+    boolean started = false;
+
     private ListView lv;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
 
     public static int ENABLE_BLUETOOTH = 1;
-    public static int SELECT_PAIRED_DEVICE = 2;
-    public static int SELECT_DISCOVERED_DEVICE = 3;
 
     ArrayAdapter<String> arrayAdapter;
 
@@ -50,6 +53,8 @@ public class Game extends Activity implements SensorEventListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.game);
 
+        //tela só na vertical
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         textViewX = (TextView) findViewById(R.id.text_view_x);
         textViewDetail = (TextView) findViewById(R.id.text_view_detail);
@@ -91,12 +96,13 @@ public class Game extends Activity implements SensorEventListener {
 //            }
 //        }
 
+
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
 
-        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);//0 -> infinito
-        startActivity(discoverableIntent);
+//        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+//        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);//0 -> infinito
+//        startActivity(discoverableIntent);
     }
 
     @Override
@@ -117,8 +123,11 @@ public class Game extends Activity implements SensorEventListener {
 
                 //quando achar o volante conectar a ele->procurar pelo endereço mac do volante
                 if(device.getAddress().equals("20:13:01:24:10:92")) {
-                    connect = new ConnectionThread("20:13:01:24:10:92");
-                    connect.start();
+                    if(!started){
+                        connect = new ConnectionThread("20:13:01:24:10:92");
+                        connect.start();
+                        started = true;
+                    }
                     bluetoothData.setText("mandar conexão e esperar data");
                 }
             }
@@ -150,10 +159,21 @@ public class Game extends Activity implements SensorEventListener {
 
         if (pitch <= 45 && pitch >= -45) {
             textViewDetail.setText("mostly vertical");
-        } else if (pitch < -45) {
+
+        } else if (pitch < -30) {
             textViewDetail.setText("mostly right side");
-        } else if (pitch > 45) {
+            if(connect.running){
+                connect.vibrarDireitaLerBotoes();
+                //connect.vibrarDireita();
+                bluetoothData.setText("" + connect.bytes);
+            }
+        } else if (pitch > 30) {
             textViewDetail.setText("mostly left side");
+            if(connect.running){
+                connect.vibrarEsquerdaLerBotoes();
+                //connect.vibrarEsquerda();
+                bluetoothData.setText("" + connect.bytes);
+            }
         }
     }
 
@@ -167,8 +187,12 @@ public class Game extends Activity implements SensorEventListener {
 
             if(dataString.equals("---N"))
                 bluetoothTextView.setText("Ocorreu um erro durante a conexão D:");
-            else if(dataString.equals("---S"))
+            else if(dataString.equals("---S")) {
                 bluetoothTextView.setText("Conectado :D");
+            }
+            else{
+                bluetoothData.setText(dataString);
+            }
 
         }
     };
