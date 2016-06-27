@@ -18,8 +18,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Message;
+import java.lang.Math;
 
-import java.io.Console;
 import java.lang.String;
 
 
@@ -32,6 +32,8 @@ public class Game extends Activity implements SensorEventListener {
     static TextView bluetoothTextView;
     static TextView textViewDetail;
     static TextView bluetoothData;
+    static TextView dataX;
+    static TextView dataY;
 
     boolean started = false;
 
@@ -41,6 +43,18 @@ public class Game extends Activity implements SensorEventListener {
     private Sensor mAccelerometer;
 
     public static int ENABLE_BLUETOOTH = 1;
+
+    public static int beginTrackX = 0;
+    public static int endTrackX = 1000;
+    public static int beginTrackY = 0;
+    public static int endTrackY = 50;
+
+    int vx = 0;
+    int acc = 0;
+    int vy = 0;
+    int dx = 0;
+    int dy = 25;
+    int vv = 50;//km/h
 
     ArrayAdapter<String> arrayAdapter;
 
@@ -60,6 +74,8 @@ public class Game extends Activity implements SensorEventListener {
         textViewDetail = (TextView) findViewById(R.id.text_view_detail);
         bluetoothTextView = (TextView) findViewById(R.id.bluetooth_text_view);
         bluetoothData = (TextView) findViewById(R.id.bluetooth_data);
+        dataX = (TextView) findViewById(R.id.Data_X);
+        dataY = (TextView) findViewById(R.id.Data_Y);
 
         lv = (ListView) findViewById(R.id.listView1);
 
@@ -153,11 +169,36 @@ public class Game extends Activity implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-        float pitch = event.values[2];
+        float fpitch = event.values[2];
+
+        if(fpitch<-60) {
+            fpitch = -60.0f;
+        }
+
+        if(fpitch>60) {
+            fpitch = 60.0f;
+        }
+
+
+        int pitch = (int)fpitch;
+
+        vv = vv + vv*acc;
+
+        double cos = Math.cos((fpitch/180)*Math.PI);
+        double sin = Math.sin((fpitch/180)*Math.PI);
+
+        vx = (int)(vv*cos);
+        vy = (int)(vv*sin);
+
+        vy = vy * (-1);
+
+        dataX.setText("" + vx + " " + beginTrackX + " " + endTrackX + " " + dx );
+
+        dataY.setText("" + vy + " " + beginTrackY + " " + endTrackY + " " + dy );
 
         textViewX.setText("Posição X: " + pitch);
         if(connect != null){
-            if (pitch <= 45 && pitch >= -45) {
+            if (pitch <= 30 && pitch >= -30) {
                 textViewDetail.setText("mostly vertical");
                 connect.pararAlmbosLerBotoes();
 

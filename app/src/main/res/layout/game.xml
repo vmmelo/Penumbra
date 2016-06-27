@@ -36,6 +36,20 @@
         android:text="blue data"
         android:id="@+id/bluetooth_data" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="data x"
+        android:id="@+id/Data_X"
+        android:layout_gravity="center_horizontal" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="data Y"
+        android:id="@+id/Data_Y"
+        android:layout_gravity="center_horizontal" />
+
     <ListView
         android:layout_width="match_parent"
         android:layout_height="425dp"
