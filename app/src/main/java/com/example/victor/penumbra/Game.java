@@ -19,6 +19,8 @@ import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Message;
 import java.lang.Math;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import java.lang.String;
 
@@ -34,6 +36,8 @@ public class Game extends Activity implements SensorEventListener {
     static TextView bluetoothData;
     static TextView dataX;
     static TextView dataY;
+
+    Timer timer;
 
     boolean started = false;
 
@@ -54,7 +58,7 @@ public class Game extends Activity implements SensorEventListener {
     int vy = 0;
     int dx = 0;
     int dy = 25;
-    int vv = 50;//km/h
+    int vv = 25;//km/h
 
     ArrayAdapter<String> arrayAdapter;
 
@@ -62,10 +66,23 @@ public class Game extends Activity implements SensorEventListener {
 
     ConnectionThread connect;
 
+    class RemindTask extends TimerTask {
+        public void run() {
+            vv = vv + vv*acc;
+
+            dx = dx + vx;
+            dy = dy + vy;
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.game);
+
+        timer = new Timer();
+
+        timer.schedule(new RemindTask(),0, 1000);
 
         //tela só na vertical
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -182,19 +199,18 @@ public class Game extends Activity implements SensorEventListener {
 
         int pitch = (int)fpitch;
 
-        vv = vv + vv*acc;
-
         double cos = Math.cos((fpitch/180)*Math.PI);
         double sin = Math.sin((fpitch/180)*Math.PI);
 
         vx = (int)(vv*cos);
-        vy = (int)(vv*sin);
+        vy = (int)(vv*sin)/5;
+
 
         vy = vy * (-1);
 
-        dataX.setText("" + vx + " " + beginTrackX + " " + endTrackX + " " + dx );
+        dataX.setText("" + vx + " " + beginTrackX + " " + endTrackX + " " + dx + " " + (vv*cos) );
 
-        dataY.setText("" + vy + " " + beginTrackY + " " + endTrackY + " " + dy );
+        dataY.setText("" + vy + " " + beginTrackY + " " + endTrackY + " " + dy+ " " + (vv*sin) );
 
         textViewX.setText("Posição X: " + pitch);
         if(connect != null){
