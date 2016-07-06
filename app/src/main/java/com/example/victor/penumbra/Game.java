@@ -36,6 +36,9 @@ public class Game extends Activity implements SensorEventListener {
     static TextView bluetoothData;
     static TextView dataX;
     static TextView dataY;
+    static TextView statusGame;
+
+    int [][] localDesastres;
 
     Timer timer;
 
@@ -53,26 +56,61 @@ public class Game extends Activity implements SensorEventListener {
     public static int beginTrackY = 0;
     public static int endTrackY = 50;
 
-    int vx = 0;
-    int acc = 0;
-    int vy = 0;
-    int dx = 0;
-    int dy = 25;
-    int vv = 25;//km/h
+    int vx = 0;//m/s
+    int vy = 0;//m/s
+    int vv = 0;//m/s
+    int vMax = 25;//m/s
+    int acc = 0;//m/sˆ2
+    int dx = beginTrackX;//m
+    int dy = endTrackY/2;//m
+
+    String outout;
 
     ArrayAdapter<String> arrayAdapter;
 
     BluetoothAdapter mBluetoothAdapter;
 
-    ConnectionThread connect;
+    ConnectionThread connectBluetooth;
 
     class RemindTask extends TimerTask {
         public void run() {
-            vv = vv + vv*acc;
+            vv = vv + acc;
+
+            if(vv<0){
+                vv = 0;
+            }
+            else if(vv>vMax){
+                vv = vMax;
+            }
 
             dx = dx + vx;
             dy = dy + vy;
+
+            if(connectBluetooth != null){
+                if(connectBluetooth.leftPressed){
+                    acc = acc -1;
+                }
+                else if(connectBluetooth.rightPressed){
+                    acc = acc +1;
+                }
+                else{
+                    acc = 0;
+                }
+            }
+
+            if(dx >= endTrackX){
+                endGame("ganhou");
+            }
+
+            if(dy<beginTrackY || dy>endTrackY){
+                endGame("morreu");
+            }
         }
+    }
+
+    private void endGame(String output){
+        this.outout = output;
+        timer.cancel();
     }
 
     @Override
@@ -84,6 +122,9 @@ public class Game extends Activity implements SensorEventListener {
 
         timer.schedule(new RemindTask(),0, 1000);
 
+        localDesastres = new int[5][2];
+        //implementar o resto
+
         //tela só na vertical
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
@@ -93,6 +134,11 @@ public class Game extends Activity implements SensorEventListener {
         bluetoothData = (TextView) findViewById(R.id.bluetooth_data);
         dataX = (TextView) findViewById(R.id.Data_X);
         dataY = (TextView) findViewById(R.id.Data_Y);
+        statusGame = (TextView) findViewById(R.id.status_game);
+
+        outout = new String("vivo");
+
+        statusGame.setText(outout);
 
         lv = (ListView) findViewById(R.id.listView1);
 
@@ -145,8 +191,10 @@ public class Game extends Activity implements SensorEventListener {
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            bluetoothTextView.setText("começou a procurar bluetooth");
             // When discovery finds a device
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 // Get the BluetoothDevice object from the Intent
@@ -155,10 +203,10 @@ public class Game extends Activity implements SensorEventListener {
                 arrayAdapter.add(device.getName() + "\n" + device.getAddress());
 
                 //quando achar o volante conectar a ele->procurar pelo endereço mac do volante
-                if(device.getAddress().equals("20:13:01:24:10:92")) {
+                if(device.getAddress().equals("20:16:03:04:15:52")) {
                     if(!started){
-                        connect = new ConnectionThread("20:13:01:24:10:92");
-                        connect.start();
+                        connectBluetooth = new ConnectionThread("20:16:03:04:15:52");
+                        connectBluetooth.start();
                         started = true;
                     }
                     bluetoothData.setText("mandar conexão e esperar data");
@@ -203,46 +251,51 @@ public class Game extends Activity implements SensorEventListener {
         double sin = Math.sin((fpitch/180)*Math.PI);
 
         vx = (int)(vv*cos);
-        vy = (int)(vv*sin)/5;
+        vy = (int)(vv*sin)/3;
 
 
         vy = vy * (-1);
 
-        dataX.setText("" + vx + " " + beginTrackX + " " + endTrackX + " " + dx + " " + (vv*cos) );
+        if(connectBluetooth != null){
 
-        dataY.setText("" + vy + " " + beginTrackY + " " + endTrackY + " " + dy+ " " + (vv*sin) );
+            dataX.setText("" + vx + " " + " " + dx + " " + connectBluetooth.rightPressed);
 
-        textViewX.setText("Posição X: " + pitch);
-        if(connect != null){
-            if (pitch <= 30 && pitch >= -30) {
-                textViewDetail.setText("mostly vertical");
-                connect.pararAlmbosLerBotoes();
+            dataY.setText("" + vy + " " + dy + " " + endTrackY/4 + " " + endTrackY*3/4);
 
-            } else if (pitch < -30) {
-                textViewDetail.setText("mostly right side");
-                if (connect.running) {
-                    connect.vibrarDireitaLerBotoes();
-                    //connect.vibrarDireita();
-                    bluetoothData.setText("" + connect.bytes);
+            /*
+            * pitch
+            * - direita
+            * + esquerda
+            */
+
+            textViewX.setText("Posição X: " + pitch);
+
+
+            if (connectBluetooth.running) {
+
+                if(dy < endTrackY/4){
+                    connectBluetooth.vibrarDireitaLerBotoes();
                 }
-            } else if (pitch > 30) {
-                textViewDetail.setText("mostly left side");
-                if (connect.running) {
-                    connect.vibrarEsquerdaLerBotoes();
-                    //connect.vibrarEsquerda();
-                    bluetoothData.setText("" + connect.bytes);
-                }
-            }
 
-            if (connect.running) {
-                if (connect.leftPressed) {
-                    bluetoothData.setText("botao esquerda apertado");
-                } else if (connect.rightPressed) {
-                    bluetoothData.setText("botao direita apertado");
+                else if(dy>endTrackY*3/4){
+                    connectBluetooth.vibrarEsquerdaLerBotoes();
+                }
+                else {
+                    connectBluetooth.pararAlmbosLerBotoes();
+                }
+
+                bluetoothData.setText("" + connectBluetooth.bytes);
+
+                if (connectBluetooth.leftPressed) {
+                    bluetoothData.setText("botao esquerdo apertado");
+                } else if (connectBluetooth.rightPressed) {
+                    bluetoothData.setText("botao direito apertado");
                 } else {
                     bluetoothData.setText("nenhum");
                 }
             }
+
+            statusGame.setText(outout);
         }
     }
 
