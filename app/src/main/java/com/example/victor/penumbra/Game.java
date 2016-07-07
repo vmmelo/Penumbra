@@ -25,6 +25,7 @@ import java.util.TimerTask;
 
 import java.lang.String;
 
+import static java.lang.Math.abs;
 
 
 public class Game extends Activity implements SensorEventListener {
@@ -33,6 +34,7 @@ public class Game extends Activity implements SensorEventListener {
     MediaPlayer mpBoom = null;
     MediaPlayer mpbip = null;
     MediaPlayer [] mpMarcha = null;
+    MediaPlayer mpObstaculo = null;
 
     static TextView textViewX;
     static TextView bluetoothTextView;
@@ -41,6 +43,7 @@ public class Game extends Activity implements SensorEventListener {
     static TextView dataX;
     static TextView dataY;
     static TextView statusGame;
+    static TextView dist_percorrida;
 
     Timer timer;
 
@@ -67,6 +70,16 @@ public class Game extends Activity implements SensorEventListener {
     int dx = beginTrackX;//m
     int dy = endTrackY/2;//m
     int marcha = 0;
+
+    boolean passouChama = false;
+    boolean passouBuraco = false;
+    boolean passouCaminhao = false;
+    boolean passouDesmoronamento = false;
+    boolean passouCratera = false;
+    int[] obsAtual = {300, 400, 550, 750, 900};
+    int obs = -1;
+    float volX;
+
 
     int [][] localDesastres;
     int comprimento = vMax;//comprimento do evento
@@ -100,6 +113,58 @@ public class Game extends Activity implements SensorEventListener {
                 else if(connectBluetooth.rightPressed){
                     vv = vv + 1;
                 }
+            }
+
+            //OBSTACULOS
+            if(dx >= 250 && !passouChama){
+
+                dispara_obstaculo("chamas");
+                passouChama = true;
+                obs = 0;
+            } else if (dx > 300){
+                mpObstaculo.stop();
+            }
+
+            if (dx >= 350 && !passouBuraco ){
+                dispara_obstaculo("buraco");
+                passouBuraco = true;
+                obs = 1;
+            } else if (dx > 400){
+                mpObstaculo.stop();
+            }
+
+            if (dx >= 500 && !passouCaminhao){
+                dispara_obstaculo("caminhao");
+                passouCaminhao = true;
+                obs = 2;
+            } else if (dx > 550){
+                mpObstaculo.stop();
+            }
+
+            if (dx >= 700 && !passouDesmoronamento){
+                dispara_obstaculo("desmoronamento");
+                passouDesmoronamento = true;
+                obs = 3;
+            } else if (dx > 750){
+                mpObstaculo.stop();
+            }
+
+            if (dx >= 850 && !passouCratera){
+                dispara_obstaculo("cratera");
+                passouCratera = true;
+                obs = 4;
+            } else if (dx > 900){
+                mpObstaculo.stop();
+            }
+
+            if(obs != -1) {
+                volX = abs(1-((obsAtual[obs] - dx) / 50));
+            }
+
+            if(obs==0 || obs==3){
+                mpObstaculo.setVolume(0f, volX);
+            } else if(obs==1 || obs==4){
+                mpObstaculo.setVolume(volX, 0f);
             }
 
             if(dx >= endTrackX){
@@ -137,7 +202,7 @@ public class Game extends Activity implements SensorEventListener {
         mpMarcha[4] = MediaPlayer.create(this,R.raw.loop_4);
         mpMarcha[5] = MediaPlayer.create(this,R.raw.loop_5);
 
-
+        mpBackGround.setVolume(0.5f, 0.5f);
         mpBackGround.setLooping(true);
         mpBackGround.start();
 
@@ -179,6 +244,7 @@ public class Game extends Activity implements SensorEventListener {
         dataX = (TextView) findViewById(R.id.Data_X);
         dataY = (TextView) findViewById(R.id.Data_Y);
         statusGame = (TextView) findViewById(R.id.status_game);
+        dist_percorrida = (TextView) findViewById(R.id.dist_percorrida);
 
         outout = new String("vivo");
 
@@ -398,6 +464,30 @@ public class Game extends Activity implements SensorEventListener {
 
         }
     };
+
+    public void dispara_obstaculo(String nome){
+        //definindo o arquivo de som do obstáculo
+        switch (nome) {
+            case "chamas":
+                mpObstaculo = MediaPlayer.create(this, R.raw.efeitos_chamas);
+                break;
+            case "buraco":
+                mpObstaculo = MediaPlayer.create(this, R.raw.beep_curto);
+                break;
+            case "caminhao":
+                mpObstaculo = MediaPlayer.create(this, R.raw.efeitos_buzina_caminhao);
+                break;
+            case "desmoronamento":
+                mpObstaculo = MediaPlayer.create(this, R.raw.efeitos_desmoronamento);
+                break;
+            case "cratera":
+                mpObstaculo = MediaPlayer.create(this, R.raw.beep_curto);
+                break;
+            default:
+                break;
+        }
+        mpObstaculo.start();
+    }
 
     //método para executar os audios, passando o nome do audio como parametro
     /*protected void managerOfSound(String theText) {
