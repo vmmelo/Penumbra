@@ -28,8 +28,10 @@ import java.lang.String;
 
 
 public class Game extends Activity implements SensorEventListener {
-    MediaPlayer mp        = null;
-    // MAC do volante : 20:13:01:24:10:92
+
+    MediaPlayer mpBackGround = null;
+    MediaPlayer mpBoom = null;
+    MediaPlayer mpbip = null;
 
     static TextView textViewX;
     static TextView bluetoothTextView;
@@ -113,13 +115,19 @@ public class Game extends Activity implements SensorEventListener {
         connectBluetooth.pararAmbos();
         timer.cancel();
         gameRunning = false;
+        mpBoom.start();
+        connectBluetooth.vibrarAmbos();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         //Som no background
-        mp = MediaPlayer.create(this, R.raw.audio1);
-        mp.start();
+        mpBackGround = MediaPlayer.create(this, R.raw.gameplay);
+        mpBoom = MediaPlayer.create(this,R.raw.explosao);
+        mpbip = MediaPlayer.create(this,R.raw.beep_curto);
+        mpBackGround.setLooping(true);
+        mpBackGround.start();
+
 
         localDesastres = new int[5][2];
         //porcentagens do tamanho maximo da pista indica onde começa o evento: 0 para x 1 para y
@@ -143,7 +151,7 @@ public class Game extends Activity implements SensorEventListener {
 
         timer = new Timer();
 
-        timer.schedule(new RemindTask(),0, 500);
+        timer.schedule(new RemindTask(),0, 1000);
 
         //tela só na vertical
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -208,6 +216,7 @@ public class Game extends Activity implements SensorEventListener {
     protected void onDestroy(){
         super.onDestroy();
         unregisterReceiver(mReceiver);
+        connectBluetooth.pararAmbos();
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -238,13 +247,16 @@ public class Game extends Activity implements SensorEventListener {
     @Override
     protected void onResume() {
         super.onResume();
+        mpBackGround.start();
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        mpBackGround.pause();
         mSensorManager.unregisterListener(this);
+        connectBluetooth.pararAmbos();
     }
 
     @Override
@@ -279,7 +291,7 @@ public class Game extends Activity implements SensorEventListener {
 
             dataX.setText("" + vx + " " + " " + dx + " " + connectBluetooth.rightPressed);
 
-            dataY.setText("" + vy + " " + dy + " " + endTrackY/4 + " " + endTrackY*3/4);
+            dataY.setText("" + vy + " " + dy + " " + endTrackY/5 + " " + endTrackY*4/5);
 
             /*
             * pitch
@@ -292,11 +304,11 @@ public class Game extends Activity implements SensorEventListener {
 
             if (connectBluetooth.running) {
 
-                if(dy < endTrackY/4 && gameRunning){
+                if(dy < endTrackY/5 && gameRunning){
                     connectBluetooth.vibrarDireitaLerBotoes();
                 }
 
-                else if(dy>endTrackY*3/4 && gameRunning){
+                else if(dy>endTrackY*4/5 && gameRunning){
                     connectBluetooth.vibrarEsquerdaLerBotoes();
                 }
                 else {
@@ -325,8 +337,8 @@ public class Game extends Activity implements SensorEventListener {
     }
 
     boolean bateu(int tamanhoPistaX,int tamanhoPistaY,int cordX,int cordY,int indiceDessastre){
-        int localDesastreX = localDesastres[1][0]*tamanhoPistaX;
-        int localDesastreY = localDesastres[1][1]*tamanhoPistaY;
+        int localDesastreX = localDesastres[indiceDessastre][0]*tamanhoPistaX;
+        int localDesastreY = localDesastres[indiceDessastre][1]*tamanhoPistaY;
 
         localDesastreX = localDesastreX/100;
         localDesastreY = localDesastreY/100;
