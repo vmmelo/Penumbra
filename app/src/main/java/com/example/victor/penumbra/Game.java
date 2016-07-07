@@ -32,6 +32,7 @@ public class Game extends Activity implements SensorEventListener {
     MediaPlayer mpBackGround = null;
     MediaPlayer mpBoom = null;
     MediaPlayer mpbip = null;
+    MediaPlayer [] mpMarcha = null;
 
     static TextView textViewX;
     static TextView bluetoothTextView;
@@ -65,6 +66,7 @@ public class Game extends Activity implements SensorEventListener {
     int vMax = 15;//m/s
     int dx = beginTrackX;//m
     int dy = endTrackY/2;//m
+    int marcha = 0;
 
     int [][] localDesastres;
     int comprimento = vMax;//comprimento do evento
@@ -125,8 +127,22 @@ public class Game extends Activity implements SensorEventListener {
         mpBackGround = MediaPlayer.create(this, R.raw.gameplay);
         mpBoom = MediaPlayer.create(this,R.raw.explosao);
         mpbip = MediaPlayer.create(this,R.raw.beep_curto);
+
+        mpMarcha = new MediaPlayer[6];
+
+        mpMarcha[0] = MediaPlayer.create(this,R.raw.loop_0);
+        mpMarcha[1] = MediaPlayer.create(this,R.raw.loop_1);
+        mpMarcha[2] = MediaPlayer.create(this,R.raw.loop_2);
+        mpMarcha[3] = MediaPlayer.create(this,R.raw.loop_3);
+        mpMarcha[4] = MediaPlayer.create(this,R.raw.loop_4);
+        mpMarcha[5] = MediaPlayer.create(this,R.raw.loop_5);
+
+
         mpBackGround.setLooping(true);
         mpBackGround.start();
+
+        mpMarcha[0].setLooping(true);
+        mpMarcha[0].start();
 
 
         localDesastres = new int[5][2];
@@ -266,6 +282,7 @@ public class Game extends Activity implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
 
+
         float fpitch = event.values[2];
 
         if(fpitch<-60) {
@@ -276,8 +293,20 @@ public class Game extends Activity implements SensorEventListener {
             fpitch = 60.0f;
         }
 
-
         int pitch = (int)fpitch;
+
+
+        textViewX.setText("Posição X: " + pitch + " " + marcha);
+
+        if(marcha!= vv/3){
+
+            mpMarcha[marcha].pause();
+
+            marcha = vv/3;
+            mpMarcha[marcha].setLooping(true);
+            mpMarcha[marcha].start();
+        }
+
 
         double cos = Math.cos((fpitch/180)*Math.PI);
         double sin = Math.sin((fpitch/180)*Math.PI);
@@ -298,8 +327,6 @@ public class Game extends Activity implements SensorEventListener {
             * - direita
             * + esquerda
             */
-
-            textViewX.setText("Posição X: " + pitch);
 
 
             if (connectBluetooth.running) {
