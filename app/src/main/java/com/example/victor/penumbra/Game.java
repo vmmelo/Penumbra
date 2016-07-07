@@ -124,7 +124,7 @@ public class Game extends Activity implements SensorEventListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         //Som no background
-        mpBackGround = MediaPlayer.create(this, R.raw.gameplay);
+        mpBackGround = MediaPlayer.create(this, R.raw.game_play);
         mpBoom = MediaPlayer.create(this,R.raw.explosao);
         mpbip = MediaPlayer.create(this,R.raw.beep_curto);
 
