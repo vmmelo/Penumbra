@@ -38,13 +38,13 @@ public class Game extends Activity implements SensorEventListener {
     static TextView dataY;
     static TextView statusGame;
 
-    int [][] localDesastres;
-
     Timer timer;
 
     boolean started = false;
 
     private ListView lv;
+
+    private boolean gameRunning = true;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -59,10 +59,13 @@ public class Game extends Activity implements SensorEventListener {
     int vx = 0;//m/s
     int vy = 0;//m/s
     int vv = 0;//m/s
-    int vMax = 25;//m/s
-    int acc = 0;//m/sˆ2
+    int vMax = 15;//m/s
     int dx = beginTrackX;//m
     int dy = endTrackY/2;//m
+
+    int [][] localDesastres;
+    int comprimento = vMax;//comprimento do evento
+    int largura = 10;// alcance do acotecimento pra + ou pra -
 
     String outout;
 
@@ -74,7 +77,6 @@ public class Game extends Activity implements SensorEventListener {
 
     class RemindTask extends TimerTask {
         public void run() {
-            vv = vv + acc;
 
             if(vv<0){
                 vv = 0;
@@ -88,13 +90,10 @@ public class Game extends Activity implements SensorEventListener {
 
             if(connectBluetooth != null){
                 if(connectBluetooth.leftPressed){
-                    acc = acc -1;
+                    vv = vv -1;
                 }
                 else if(connectBluetooth.rightPressed){
-                    acc = acc +1;
-                }
-                else{
-                    acc = 0;
+                    vv = vv + 1;
                 }
             }
 
@@ -110,20 +109,37 @@ public class Game extends Activity implements SensorEventListener {
 
     private void endGame(String output){
         this.outout = output;
+        connectBluetooth.pararAmbos();
         timer.cancel();
+        gameRunning = false;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
+        localDesastres = new int[5][2];
+        //porcentagens do tamanho maximo da pista indica onde começa o evento: 0 para x 1 para y
+        localDesastres[0][0] = 30;//x
+        localDesastres[0][1] = 70;//y
+
+        localDesastres[1][0] = 40;//x
+        localDesastres[1][1] = 0;//y
+
+        localDesastres[2][0] = 55;//x
+        localDesastres[2][1] = 50;//y
+
+        localDesastres[3][0] = 75;//x
+        localDesastres[3][1] = 60;//y
+
+        localDesastres[4][0] = 90;//x
+        localDesastres[4][1] = 40;//y
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.game);
 
         timer = new Timer();
 
-        timer.schedule(new RemindTask(),0, 1000);
-
-        localDesastres = new int[5][2];
-        //implementar o resto
+        timer.schedule(new RemindTask(),0, 500);
 
         //tela só na vertical
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -253,7 +269,6 @@ public class Game extends Activity implements SensorEventListener {
         vx = (int)(vv*cos);
         vy = (int)(vv*sin)/3;
 
-
         vy = vy * (-1);
 
         if(connectBluetooth != null){
@@ -273,15 +288,15 @@ public class Game extends Activity implements SensorEventListener {
 
             if (connectBluetooth.running) {
 
-                if(dy < endTrackY/4){
+                if(dy < endTrackY/4 && gameRunning){
                     connectBluetooth.vibrarDireitaLerBotoes();
                 }
 
-                else if(dy>endTrackY*3/4){
+                else if(dy>endTrackY*3/4 && gameRunning){
                     connectBluetooth.vibrarEsquerdaLerBotoes();
                 }
                 else {
-                    connectBluetooth.pararAlmbosLerBotoes();
+                    connectBluetooth.pararAmbosLerBotoes();
                 }
 
                 bluetoothData.setText("" + connectBluetooth.bytes);
@@ -296,7 +311,29 @@ public class Game extends Activity implements SensorEventListener {
             }
 
             statusGame.setText(outout);
+
+            for(int a=0;a<5;a++){
+                if(bateu(endTrackX,endTrackY,dx,dy,a)){
+                    endGame("bateu");
+                }
+            }
         }
+    }
+
+    boolean bateu(int tamanhoPistaX,int tamanhoPistaY,int cordX,int cordY,int indiceDessastre){
+        int localDesastreX = localDesastres[1][0]*tamanhoPistaX;
+        int localDesastreY = localDesastres[1][1]*tamanhoPistaY;
+
+        localDesastreX = localDesastreX/100;
+        localDesastreY = localDesastreY/100;
+
+        textViewDetail.setText("" + localDesastreX + " " + localDesastreY + " " + (localDesastreX + comprimento) + " " + (localDesastreY + largura));
+
+        if((cordX >= localDesastreX && cordX <= (localDesastreX + comprimento)) && (cordY >= localDesastreY && cordY <= (localDesastreY + largura))){
+            return true;
+        }
+
+        return false;
     }
 
     public static Handler handler = new Handler() {

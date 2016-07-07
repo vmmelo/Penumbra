@@ -237,7 +237,7 @@ public class ConnectionThread extends Thread{
         running = false;
     }
 
-    public void pararAlmbos(){
+    public void pararAmbos(){
         data = new byte[1];
         data[0] = 0b000;
         //data[0] = 0;
@@ -286,7 +286,7 @@ public class ConnectionThread extends Thread{
         write(data);
     }
 
-    public void pararAlmbosLerBotoes(){
+    public void pararAmbosLerBotoes(){
         data = new byte[1];
         data[0] = 0b100;
         //data[0] = 4;
