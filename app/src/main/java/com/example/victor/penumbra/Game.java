@@ -8,6 +8,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -27,7 +28,7 @@ import java.lang.String;
 
 
 public class Game extends Activity implements SensorEventListener {
-
+    MediaPlayer mp        = null;
     // MAC do volante : 20:13:01:24:10:92
 
     static TextView textViewX;
@@ -116,6 +117,9 @@ public class Game extends Activity implements SensorEventListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        //Som no background
+        mp = MediaPlayer.create(this, R.raw.audio1);
+        mp.start();
 
         localDesastres = new int[5][2];
         //porcentagens do tamanho maximo da pista indica onde começa o evento: 0 para x 1 para y
@@ -355,5 +359,20 @@ public class Game extends Activity implements SensorEventListener {
 
         }
     };
+
+    //método para executar os audios, passando o nome do audio como parametro
+    /*protected void managerOfSound(String theText) {
+        if (mp != null) {
+            mp.reset();
+            mp.release();
+        }
+        if (theText == "hello")
+            mp = MediaPlayer.create(this, R.raw.hello);
+        else if (theText == "goodbye")
+            mp = MediaPlayer.create(this, R.raw.goodbye);
+        else
+            mp = MediaPlayer.create(this, R.raw.what);
+        mp.start();
+    }*/
 }
 
