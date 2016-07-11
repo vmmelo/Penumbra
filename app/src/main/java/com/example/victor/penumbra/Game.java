@@ -400,12 +400,12 @@ public class Game extends Activity implements SensorEventListener {
 
                 if(dy < endTrackY/5 && gameRunning){
                     connectBluetooth.vibrarDireitaLerBotoes();
-                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_vireEsquerdaPista);
+                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_vire_esquerda_pista);
                 }
 
                 else if(dy>endTrackY*4/5 && gameRunning){
                     connectBluetooth.vibrarEsquerdaLerBotoes();
-                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_viraDireitaPista);
+                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_vira_direita_pista);
                 }
                 else {
                     connectBluetooth.pararAmbosLerBotoes();
