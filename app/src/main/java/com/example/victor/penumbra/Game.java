@@ -202,7 +202,7 @@ public class Game extends Activity implements SensorEventListener {
     public void onCreate(Bundle savedInstanceState) {
 
         MediaPlayer mpCenaInicial = MediaPlayer.create(this, R.raw.dub_cena_inicial);
-        //mpCenaInicial.start();
+        mpCenaInicial.start();
 
         while (mpCenaInicial.isPlaying()) {
             vv=0;
