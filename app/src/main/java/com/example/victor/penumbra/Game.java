@@ -83,7 +83,7 @@ public class Game extends Activity implements SensorEventListener {
 
     int [][] localDesastres;
     int comprimento = vMax;//comprimento do evento
-    int largura = 10;// alcance do acotecimento pra + ou pra -
+    int largura = 25;// alcance do acotecimento pra + ou pra -
 
     String outout;
 
@@ -117,7 +117,6 @@ public class Game extends Activity implements SensorEventListener {
 
             //OBSTACULOS
             if(dx >= 250 && !passouChama){
-
                 dispara_obstaculo("chamas");
                 passouChama = true;
                 obs = 0;
@@ -157,14 +156,19 @@ public class Game extends Activity implements SensorEventListener {
                 mpObstaculo.stop();
             }
 
+            int localDesastreY = -1;
             if(obs != -1) {
                 volX = abs(1-((obsAtual[obs] - dx) / 50));
-            }
-
-            if(obs==0 || obs==3){
-                mpObstaculo.setVolume(0f, volX);
-            } else if(obs==1 || obs==4){
-                mpObstaculo.setVolume(volX, 0f);
+                localDesastreY = localDesastres[obs][1] * endTrackY / 100;
+                if (dy < localDesastreY) {
+                    mpObstaculo.setVolume(0f, volX);
+                }
+                else if (dy > localDesastreY + largura) {
+                    mpObstaculo.setVolume(volX, 0f);
+                }
+                else {
+                    mpObstaculo.setVolume(volX, volX);
+                }
             }
 
             if(dx >= endTrackX){
