@@ -35,6 +35,7 @@ public class Game extends Activity implements SensorEventListener {
     MediaPlayer mpbip = null;
     MediaPlayer [] mpMarcha = null;
     MediaPlayer mpObstaculo = null;
+    MediaPlayer dubAuxPista = null;
 
     static TextView textViewX;
     static TextView bluetoothTextView;
@@ -399,10 +400,12 @@ public class Game extends Activity implements SensorEventListener {
 
                 if(dy < endTrackY/5 && gameRunning){
                     connectBluetooth.vibrarDireitaLerBotoes();
+                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_vireEsquerdaPista);
                 }
 
                 else if(dy>endTrackY*4/5 && gameRunning){
                     connectBluetooth.vibrarEsquerdaLerBotoes();
+                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_viraDireitaPista);
                 }
                 else {
                     connectBluetooth.pararAmbosLerBotoes();
