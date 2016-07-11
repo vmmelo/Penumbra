@@ -66,7 +66,7 @@ public class Game extends Activity implements SensorEventListener {
 
     int vx = 0;//m/s
     int vy = 0;//m/s
-    int vv = 15;//m/s
+    int vv = 0;//m/s
     int vMax = 15;//m/s
     int dx = beginTrackX;//m
     int dy = endTrackY/2;//m
@@ -182,11 +182,11 @@ public class Game extends Activity implements SensorEventListener {
         int marcha = vv/3;
         mpMarcha[marcha].stop();
         this.outout = output;
-        //connectBluetooth.pararAmbos();
+        connectBluetooth.pararAmbos();
         timer.cancel();
         gameRunning = false;
         mpBoom.start();
-        //connectBluetooth.vibrarAmbos();
+        connectBluetooth.vibrarAmbos();
     }
 
     @Override
