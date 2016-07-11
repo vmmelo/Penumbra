@@ -33,7 +33,7 @@ public class Game extends Activity implements SensorEventListener {
     MediaPlayer mpBackGround = null;
     MediaPlayer mpBoom = null;
     MediaPlayer mpbip = null;
-    MediaPlayer [] mpMarcha = null;
+    MediaPlayer mpMarcha = null;
     MediaPlayer mpObstaculo = null;
     MediaPlayer dubAuxPista = null;
 
@@ -54,6 +54,9 @@ public class Game extends Activity implements SensorEventListener {
 
     private boolean gameRunning = true;
 
+    boolean saindoPistaEsquerda = false;
+    boolean saindoPistaDireita = false;
+
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
 
@@ -66,7 +69,7 @@ public class Game extends Activity implements SensorEventListener {
 
     int vx = 0;//m/s
     int vy = 0;//m/s
-    int vv = 0;//m/s
+    int vv = 15;//m/s
     int vMax = 15;//m/s
     int dx = beginTrackX;//m
     int dy = endTrackY/2;//m
@@ -179,8 +182,14 @@ public class Game extends Activity implements SensorEventListener {
     }
 
     private void endGame(String output){
-        int marcha = vv/3;
-        mpMarcha[marcha].stop();
+        mpMarcha.stop();
+        if(output.equals("ganhou")) {
+            vv = 0;
+            mpBackGround.pause();
+            mpBackGround = MediaPlayer.create(this, R.raw.dub_encerramento_general);
+            mpBackGround.start();
+            dist_percorrida.setText("Parabéns, Você venceu!");
+        }
         this.outout = output;
         connectBluetooth.pararAmbos();
         timer.cancel();
@@ -191,28 +200,29 @@ public class Game extends Activity implements SensorEventListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
+        MediaPlayer mpCenaInicial = MediaPlayer.create(this, R.raw.dub_cena_inicial);
+        //mpCenaInicial.start();
+
+        while (mpCenaInicial.isPlaying()) {
+            vv=0;
+        }
+
         //Som no background
         mpBackGround = MediaPlayer.create(this, R.raw.game_play);
         mpBoom = MediaPlayer.create(this,R.raw.explosao);
         mpbip = MediaPlayer.create(this,R.raw.beep_curto);
-
-        mpMarcha = new MediaPlayer[6];
-
-        mpMarcha[0] = MediaPlayer.create(this,R.raw.loop_0);
-        mpMarcha[1] = MediaPlayer.create(this,R.raw.loop_1);
-        mpMarcha[2] = MediaPlayer.create(this,R.raw.loop_2);
-        mpMarcha[3] = MediaPlayer.create(this,R.raw.loop_3);
-        mpMarcha[4] = MediaPlayer.create(this,R.raw.loop_4);
-        mpMarcha[5] = MediaPlayer.create(this,R.raw.loop_5);
+        mpMarcha = MediaPlayer.create(this,R.raw.motor);
 
         mpBackGround.setVolume(0.5f, 0.5f);
         mpBackGround.setLooping(true);
         mpBackGround.start();
 
-        mpMarcha[0].setLooping(true);
-        mpMarcha[0].start();
+        mpMarcha.setVolume(0.5f, 0.5f);
+        mpMarcha.setLooping(true);
+        mpMarcha.start();
 
-
+        endGame("ganhou");
         localDesastres = new int[5][2];
         //porcentagens do tamanho maximo da pista indica onde começa o evento: 0 para x 1 para y
         localDesastres[0][0] = 30;//x
@@ -333,6 +343,7 @@ public class Game extends Activity implements SensorEventListener {
     protected void onResume() {
         super.onResume();
         mpBackGround.start();
+        mpMarcha.start();
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
@@ -340,6 +351,7 @@ public class Game extends Activity implements SensorEventListener {
     protected void onPause() {
         super.onPause();
         mpBackGround.pause();
+        mpMarcha.pause();
         mSensorManager.unregisterListener(this);
         connectBluetooth.pararAmbos();
     }
@@ -367,15 +379,6 @@ public class Game extends Activity implements SensorEventListener {
 
         textViewX.setText("Posição X: " + pitch + " " + marcha);
 
-        if(marcha!= vv/3){
-
-            mpMarcha[marcha].pause();
-
-            marcha = vv/3;
-            mpMarcha[marcha].setLooping(true);
-            mpMarcha[marcha].start();
-        }
-
 
         double cos = Math.cos((fpitch/180)*Math.PI);
         double sin = Math.sin((fpitch/180)*Math.PI);
@@ -400,14 +403,19 @@ public class Game extends Activity implements SensorEventListener {
 
             if (connectBluetooth.running) {
 
-                if(dy < endTrackY/5 && gameRunning){
+
+                if(dy < endTrackY/5 && gameRunning && !saindoPistaEsquerda){
                     connectBluetooth.vibrarDireitaLerBotoes();
-                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_vire_esquerda_pista);
+                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_vira_direita_pista);
+                    dubAuxPista.start();
+                    saindoPistaEsquerda = true;
                 }
 
-                else if(dy>endTrackY*4/5 && gameRunning){
+                else if(dy>endTrackY*4/5 && gameRunning && !saindoPistaDireita){
                     connectBluetooth.vibrarEsquerdaLerBotoes();
-                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_vira_direita_pista);
+                    dubAuxPista = MediaPlayer.create(this, R.raw.dub_vira_esquerda_pista);
+                    dubAuxPista.start();
+                    saindoPistaDireita = true;
                 }
                 else {
                     connectBluetooth.pararAmbosLerBotoes();
@@ -477,7 +485,7 @@ public class Game extends Activity implements SensorEventListener {
                 mpObstaculo = MediaPlayer.create(this, R.raw.efeitos_chamas);
                 break;
             case "buraco":
-                mpObstaculo = MediaPlayer.create(this, R.raw.beep_curto);
+                mpObstaculo = MediaPlayer.create(this, R.raw.efeitos_sirenes);
                 break;
             case "caminhao":
                 mpObstaculo = MediaPlayer.create(this, R.raw.efeitos_buzina_caminhao);
@@ -486,27 +494,12 @@ public class Game extends Activity implements SensorEventListener {
                 mpObstaculo = MediaPlayer.create(this, R.raw.efeitos_desmoronamento);
                 break;
             case "cratera":
-                mpObstaculo = MediaPlayer.create(this, R.raw.beep_curto);
+                mpObstaculo = MediaPlayer.create(this, R.raw.efeitos_sirenes);
                 break;
             default:
                 break;
         }
         mpObstaculo.start();
     }
-
-    //método para executar os audios, passando o nome do audio como parametro
-    /*protected void managerOfSound(String theText) {
-        if (mp != null) {
-            mp.reset();
-            mp.release();
-        }
-        if (theText == "hello")
-            mp = MediaPlayer.create(this, R.raw.hello);
-        else if (theText == "goodbye")
-            mp = MediaPlayer.create(this, R.raw.goodbye);
-        else
-            mp = MediaPlayer.create(this, R.raw.what);
-        mp.start();
-    }*/
 }
 
